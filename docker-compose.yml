@@ -1,0 +1,23 @@
+services:
+  ig-reel-api:
+    build: .
+    image: ig-reel-api:latest
+    container_name: ig-reel-api
+    ports:
+      - "8099:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - HEADLESS=1
+      - BROWSER=
+      - CONCURRENCY=3
+      - USER_TIMEOUT=150
+      # - BD_BROWSER_WS=wss://...   # uncomment to route through Bright Data
+    shm_size: "1gb"          # Chrome needs this
+    restart: unless-stopped
+    networks:
+      - ig-reel-net
+
+networks:
+  ig-reel-net:
+    name: ig-reel-net
