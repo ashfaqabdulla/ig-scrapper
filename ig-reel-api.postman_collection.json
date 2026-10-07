@@ -1,0 +1,455 @@
+{
+    "info": {
+        "_postman_id": "ig-reel-api-collection",
+        "name": "IG Reel Leaderboard API",
+        "description": "Collect + scrape Instagram reel metrics via the local FastAPI service.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8099",
+            "type": "string"
+        },
+        {
+            "key": "job_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Health",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/health",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "health"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('status 200', () => pm.response.to.have.status(200));",
+                            "const j = pm.response.json();",
+                            "pm.test('status field is ok', () => pm.expect(j.status).to.eql('ok'));"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "API index",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        ""
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Collect  (users -> reels)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"users\": [\"natgeo\", \"instagram\"],\n  \"min_per_user\": 2,\n  \"max_per_user\": 3,\n  \"concurrency\": 2,\n  \"user_timeout\": 120\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/collect",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "collect"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('status 200', () => pm.response.to.have.status(200));",
+                            "const j = pm.response.json();",
+                            "pm.test('has job id', () => pm.expect(j).to.have.property('id'));",
+                            "if (j && j.id) { pm.environment.set('job_id', j.id); console.log('job_id =', j.id); }"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Scrape  (reels -> plays/likes/comments)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"reels\": [\n    \"https://www.instagram.com/natgeo/reel/DeCbRyHgmlu/\",\n    \"https://www.instagram.com/natgeo/reel/DeCOar9gqof/\",\n    \"https://www.instagram.com/instagram/reel/Dd9RyBWBVih/\"\n  ],\n  \"concurrency\": 2\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/scrape",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "scrape"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('status 200', () => pm.response.to.have.status(200));",
+                            "const j = pm.response.json();",
+                            "if (j && j.id) { pm.environment.set('job_id', j.id); console.log('job_id =', j.id); }"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Pipeline  (collect + scrape)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"users\": [\"natgeo\", \"instagram\"],\n  \"min_per_user\": 2,\n  \"max_per_user\": 3,\n  \"collect_concurrency\": 2,\n  \"scrape_concurrency\": 2,\n  \"user_timeout\": 120\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/pipeline",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "pipeline"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('status 200', () => pm.response.to.have.status(200));",
+                            "const j = pm.response.json();",
+                            "if (j && j.id) { pm.environment.set('job_id', j.id); console.log('job_id =', j.id); }"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "List jobs",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/jobs",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "jobs"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('status 200', () => pm.response.to.have.status(200));",
+                            "const list = pm.response.json();",
+                            "pm.test('is array', () => pm.expect(list).to.be.an('array'));",
+                            "if (list.length > 0 && !pm.environment.get('job_id')) {",
+                            "  pm.environment.set('job_id', list[0].id);",
+                            "}"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Get job",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/jobs/{{job_id}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "jobs",
+                        "{{job_id}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('status 200 or 404', () => pm.expect([200,404]).to.include(pm.response.code));"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Get job (with logs)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/jobs/{{job_id}}?logs=true",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "jobs",
+                        "{{job_id}}"
+                    ],
+                    "query": [
+                        {
+                            "key": "logs",
+                            "value": "true"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Get logs",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/jobs/{{job_id}}/logs",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "jobs",
+                        "{{job_id}}",
+                        "logs"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Get result",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/jobs/{{job_id}}/result",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "jobs",
+                        "{{job_id}}",
+                        "result"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "// 200 when finished, 409 when still running",
+                            "pm.test('status 200 or 409', () => pm.expect([200,409]).to.include(pm.response.code));",
+                            "if (pm.response.code === 200) {",
+                            "  const j = pm.response.json();",
+                            "  if (j.result && j.result.status_counts) {",
+                            "    console.log('status_counts =', JSON.stringify(j.result.status_counts));",
+                            "  }",
+                            "}"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Download reels.txt",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/jobs/{{job_id}}/download/reels.txt",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "jobs",
+                        "{{job_id}}",
+                        "download",
+                        "reels.txt"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Cancel job",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/jobs/{{job_id}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "jobs",
+                        "{{job_id}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Negative - empty users (422)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\"users\": []}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/collect",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "collect"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('expects 422', () => pm.response.to.have.status(422));"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Negative - empty reels (422)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\"reels\": []}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/scrape",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "scrape"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('expects 422', () => pm.response.to.have.status(422));"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Negative - unknown job (404)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/jobs/doesnotexist",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "jobs",
+                        "doesnotexist"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('expects 404', () => pm.response.to.have.status(404));"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
